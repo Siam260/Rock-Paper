@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f8ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        
+        .game-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 350px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .choices {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+        }
+        
+        .choice {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #eaf2f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            font-size: 40px;
+        }
+        
+        .choice:hover {
+            transform: scale(1.1);
+            background-color: #d4e6f1;
+        }
+        
+        #rock { color: #7d6608; }
+        #paper { color: #2874a6; }
+        #scissors { color: #78281f; }
+        
+        .result-area {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        
+        .choices-made {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            font-size: 24px;
+        }
+        
+        #result {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        .win {
+            background-color: #abebc6;
+            color: #1d8348;
+        }
+        
+        .lose {
+            background-color: #f5b7b1;
+            color: #c0392b;
+        }
+        
+        .tie {
+            background-color: #f9e79f;
+            color: #7d6608;
+        }
+        
+        .score {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        
+        .score div {
+            padding: 5px 15px;
+            border-radius: 4px;
+            background-color: #eaf2f8;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Rock Paper Scissors</h1>
+        <p>Choose your weapon!</p>
+        
+        <div class="choices">
+            <div class="choice" id="rock" onclick="playGame('rock')">✊</div>
+            <div class="choice" id="paper" onclick="playGame('paper')">✋</div>
+            <div class="choice" id="scissors" onclick="playGame('scissors')">✌️</div>
+        </div>
+        
+        <div class="result-area">
+            <div class="choices-made">
+                <div id="player-choice">-</div>
+                <div>vs</div>
+                <div id="computer-choice">-</div>
+            </div>
+            
+            <div id="result">Make your move!</div>
+            
+            <div class="score">
+                <div>Wins: <span id="wins">0</span></div>
+                <div>Losses: <span id="losses">0</span></div>
+                <div>Ties: <span id="ties">0</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let wins = 0;
+        let losses = 0;
+        let ties = 0;
+        
+        function playGame(playerChoice) {
+            // Highlight selected choice
+            document.querySelectorAll('.choice').forEach(choice => {
+                choice.style.backgroundColor = '#eaf2f8';
+            });
+            document.getElementById(playerChoice).style.backgroundColor = '#d4e6f1';
+            
+            fetch('/play', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    choice: playerChoice
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('result').textContent = data.error;
+                    return;
+                }
+                
+                // Update choices display
+                document.getElementById('player-choice').textContent = getEmoji(data.player_choice);
+                document.getElementById('computer-choice').textContent = getEmoji(data.computer_choice);
+                
+                // Update result
+                const resultDiv = document.getElementById('result');
+                resultDiv.className = data.result;
+                
+                if (data.result === 'win') {
+                    resultDiv.textContent = 'You win!';
+                    wins++;
+                } else if (data.result === 'lose') {
+                    resultDiv.textContent = 'You lose!';
+                    losses++;
+                } else {
+                    resultDiv.textContent = "It's a tie!";
+                    ties++;
+                }
+                
+                // Update score
+                document.getElementById('wins').textContent = wins;
+                document.getElementById('losses').textContent = losses;
+                document.getElementById('ties').textContent = ties;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').textContent = 'An error occurred';
+            });
+        }
+        
+        function getEmoji(choice) {
+            switch(choice) {
+                case 'rock': return '✊';
+                case 'paper': return '✋';
+                case 'scissors': return '✌️';
+                default: return '-';
+            }
+        }
+    </script>
+</body>
+</html>
